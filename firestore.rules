@@ -1,0 +1,42 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper: Check if authenticated user has teacher role
+    function isTeacher() {
+      return request.auth != null && (
+        request.auth.token.role == 'teacher' ||
+        request.auth.token.admin == true
+      );
+    }
+
+    // Exam configuration and access control
+    match /exams/{examId}/config/settings {
+      allow read: if true;
+      allow write: if isTeacher();
+    }
+
+    // Access control logs
+    match /exams/{examId}/access_logs/{logId} {
+      allow read, write: if isTeacher();
+    }
+
+    // Staging test collection for isolated staging verification
+    match /exams/test_staging_mat_xi_2026/{document=**} {
+      allow read, write: if true;
+    }
+
+    // Production exam sessions
+    match /exams/{examId}/sessions/{sessionId} {
+      allow read: if isTeacher() || (
+        request.auth != null && resource.data.studentUid == request.auth.uid
+      );
+      allow create, update, delete: if isTeacher();
+    }
+
+    // Fallback deny all other documents
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

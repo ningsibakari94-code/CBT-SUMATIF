@@ -1,0 +1,151 @@
+{
+  "settings": {
+    "durationMinutes": 60,
+    "examCode": "",
+    "codeRequired": false,
+    "tabSwitchRule": "warning-2",
+    "kkmScore": 75,
+    "preventRetake": true
+  },
+  "sessions": [
+    {
+      "id": "cbt-1793089249903-jopk9",
+      "sessionToken": "token-1793089249903-z21t3691",
+      "studentName": "Ning",
+      "studentClass": "XI.1",
+      "participantNumber": "5",
+      "examCode": "",
+      "startTime": "2026-10-27T08:20:49.903Z",
+      "status": "submitted",
+      "answers": {
+        "1": {
+          "singleChoice": "D"
+        },
+        "2": {
+          "singleChoice": "E"
+        },
+        "3": {
+          "multiChoices": [
+            "D"
+          ]
+        },
+        "4": {
+          "multiChoices": [
+            "E"
+          ]
+        },
+        "5": {
+          "matchedPairs": {
+            "1": "E",
+            "2": "D",
+            "3": "D"
+          }
+        },
+        "6": {
+          "matchedPairs": {
+            "1": "D",
+            "2": "E"
+          }
+        }
+      },
+      "reviewFlags": {},
+      "tabViolations": [],
+      "scores": {
+        "perQuestion": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0,
+          "8": 0,
+          "9": 0,
+          "10": 0
+        },
+        "essayRubrics": {
+          "9": {
+            "identifikasi": 0,
+            "model": 0,
+            "hitungan": 0,
+            "penalaran": 0,
+            "kesimpulan": 0
+          },
+          "10": {
+            "identifikasi": 0,
+            "model": 0,
+            "hitungan": 0,
+            "penalaran": 0,
+            "kesimpulan": 0
+          }
+        },
+        "objectiveScore": 0,
+        "essayScore": 0,
+        "totalScore": 0,
+        "finalScore100": 0,
+        "isFullyGraded": true
+      },
+      "finishTime": "2026-10-27T08:21:30.911Z",
+      "durationSecondsUsed": 41,
+      "statusReason": "Diselesaikan secara mandiri oleh murid"
+    },
+    {
+      "id": "cbt-1793089388857-ujl28",
+      "sessionToken": "token-1793089388857-wevq0nf3",
+      "studentName": "Lisa",
+      "studentClass": "XI.1",
+      "participantNumber": "8",
+      "examCode": "",
+      "startTime": "2026-10-27T08:23:08.857Z",
+      "status": "submitted",
+      "answers": {
+        "1": {
+          "singleChoice": "B"
+        },
+        "2": {
+          "singleChoice": "C"
+        }
+      },
+      "reviewFlags": {},
+      "tabViolations": [],
+      "scores": {
+        "perQuestion": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0,
+          "8": 0,
+          "9": 0,
+          "10": 0
+        },
+        "essayRubrics": {
+          "9": {
+            "identifikasi": 0,
+            "model": 0,
+            "hitungan": 0,
+            "penalaran": 0,
+            "kesimpulan": 0
+          },
+          "10": {
+            "identifikasi": 0,
+            "model": 0,
+            "hitungan": 0,
+            "penalaran": 0,
+            "kesimpulan": 0
+          }
+        },
+        "objectiveScore": 0,
+        "essayScore": 0,
+        "totalScore": 0,
+        "finalScore100": 0,
+        "isFullyGraded": true
+      },
+      "finishTime": "2026-10-27T08:23:15.408Z",
+      "durationSecondsUsed": 6,
+      "statusReason": "Diselesaikan secara mandiri oleh murid"
+    }
+  ]
+}

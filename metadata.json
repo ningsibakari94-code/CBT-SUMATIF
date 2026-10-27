@@ -1,0 +1,6 @@
+{
+  "name": "CBT Sumatif Matematika Kelas XI",
+  "description": "Aplikasi CBT Sumatif Matematika SMA Kelas XI materi Fungsi Komposisi dan Fungsi Invers dilengkapi sistem penilaian otomatis, rubrik analitik, deteksi tab, dan dashboard analisis guru.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

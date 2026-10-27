@@ -1,0 +1,337 @@
+{
+  "settings": {
+    "durationMinutes": 60,
+    "examCode": "",
+    "codeRequired": false,
+    "tabSwitchRule": "warning-2",
+    "kkmScore": 75,
+    "preventRetake": true,
+    "accessControl": {
+      "status": "open",
+      "lockReason": "",
+      "schedule": {
+        "startDate": "2026-10-01",
+        "startTime": "08:00",
+        "endDate": "2026-10-01",
+        "endTime": "09:00",
+        "timezone": "Asia/Makassar",
+        "isScheduleEnabled": false
+      },
+      "logs": [
+        {
+          "timestamp": "2026-10-27T09:19:26.596Z",
+          "action": "unlock",
+          "operator": "Auditor",
+          "reason": "Kembali normal setelah audit",
+          "details": "Pembukaan kembali akses aplikasi secara manual"
+        },
+        {
+          "timestamp": "2026-10-27T09:19:26.583Z",
+          "action": "lock",
+          "operator": "Auditor",
+          "reason": "Audit uji kunci",
+          "details": "Penguncian manual aplikasi web"
+        },
+        {
+          "timestamp": "2026-10-27T09:15:11.712Z",
+          "action": "unlock",
+          "operator": "Auditor",
+          "reason": "Kembali normal setelah audit",
+          "details": "Pembukaan kembali akses aplikasi secara manual"
+        },
+        {
+          "timestamp": "2026-10-27T09:15:11.698Z",
+          "action": "lock",
+          "operator": "Auditor",
+          "reason": "Audit penguncian server",
+          "details": "Penguncian manual aplikasi web"
+        },
+        {
+          "timestamp": "2026-10-27T08:59:50.498Z",
+          "action": "unlock",
+          "operator": "Penguji",
+          "reason": "Kembali normal setelah uji K8",
+          "details": "Pembukaan kembali akses aplikasi secara manual"
+        },
+        {
+          "timestamp": "2026-10-27T08:59:50.494Z",
+          "action": "lock",
+          "operator": "Penguji",
+          "reason": "Kunci untuk uji K8",
+          "details": "Penguncian manual aplikasi web"
+        },
+        {
+          "timestamp": "2026-10-27T08:59:50.487Z",
+          "action": "unlock",
+          "operator": "Guru Pengawas",
+          "reason": "Membuka kembali akses normal",
+          "details": "Pembukaan kembali akses aplikasi secara manual"
+        },
+        {
+          "timestamp": "2026-10-27T08:59:50.477Z",
+          "action": "schedule_update",
+          "operator": "Penguji Otomatis",
+          "details": "Jadwal: 2026-10-01 08:00 s.d. 2026-10-01 09:00 (Asia/Makassar)"
+        },
+        {
+          "timestamp": "2026-10-27T08:59:50.456Z",
+          "action": "lock",
+          "operator": "Penguji Otomatis",
+          "reason": "Pengujian penguncian akses.",
+          "details": "Penguncian manual aplikasi web"
+        },
+        {
+          "timestamp": "2026-10-27T08:59:50.447Z",
+          "action": "unlock",
+          "operator": "Penguji Otomatis",
+          "reason": "Akses dibuka kembali secara manual.",
+          "details": "Pembukaan kembali akses aplikasi secara manual"
+        },
+        {
+          "timestamp": "2026-10-27T08:59:41.008Z",
+          "action": "unlock",
+          "operator": "Penguji",
+          "reason": "Akses dibuka kembali secara manual.",
+          "details": "Pembukaan kembali akses aplikasi secara manual"
+        },
+        {
+          "timestamp": "2026-10-27T08:58:43.396Z",
+          "action": "unlock",
+          "operator": "Penguji",
+          "reason": "Akses dibuka kembali secara manual.",
+          "details": "Pembukaan kembali akses aplikasi secara manual"
+        },
+        {
+          "timestamp": "2026-10-27T08:57:54.755Z",
+          "action": "unlock",
+          "operator": "Penguji",
+          "reason": "Kembali normal setelah uji K8",
+          "details": "Pembukaan kembali akses aplikasi secara manual"
+        },
+        {
+          "timestamp": "2026-10-27T08:57:54.752Z",
+          "action": "lock",
+          "operator": "Penguji",
+          "reason": "Kunci untuk uji K8",
+          "details": "Penguncian manual aplikasi web"
+        },
+        {
+          "timestamp": "2026-10-27T08:57:54.747Z",
+          "action": "unlock",
+          "operator": "Guru Pengawas",
+          "reason": "Membuka kembali akses normal",
+          "details": "Pembukaan kembali akses aplikasi secara manual"
+        },
+        {
+          "timestamp": "2026-10-27T08:57:54.740Z",
+          "action": "schedule_update",
+          "operator": "Penguji Otomatis",
+          "details": "Jadwal: 2026-10-01 08:00 s.d. 2026-10-01 09:00 (Asia/Makassar)"
+        },
+        {
+          "timestamp": "2026-10-27T08:57:54.732Z",
+          "action": "lock",
+          "operator": "Penguji Otomatis",
+          "reason": "Pengujian penguncian akses.",
+          "details": "Penguncian manual aplikasi web"
+        },
+        {
+          "timestamp": "2026-10-27T08:57:54.723Z",
+          "action": "unlock",
+          "operator": "Penguji Otomatis",
+          "reason": "Akses dibuka kembali secara manual.",
+          "details": "Pembukaan kembali akses aplikasi secara manual"
+        },
+        {
+          "timestamp": "2026-10-27T08:56:29.477Z",
+          "action": "lock",
+          "operator": "Guru Pengawas",
+          "reason": "Test",
+          "details": "Penguncian manual aplikasi web"
+        },
+        {
+          "timestamp": "2026-10-27T08:56:17.681Z",
+          "action": "unlock",
+          "operator": "Penguji",
+          "reason": "Kembali normal setelah uji K8",
+          "details": "Pembukaan kembali akses aplikasi secara manual"
+        },
+        {
+          "timestamp": "2026-10-27T08:56:17.678Z",
+          "action": "lock",
+          "operator": "Penguji",
+          "reason": "Kunci untuk uji K8",
+          "details": "Penguncian manual aplikasi web"
+        },
+        {
+          "timestamp": "2026-10-27T08:56:17.672Z",
+          "action": "unlock",
+          "operator": "Guru Pengawas",
+          "reason": "Membuka kembali akses normal",
+          "details": "Pembukaan kembali akses aplikasi secara manual"
+        },
+        {
+          "timestamp": "2026-10-27T08:56:17.660Z",
+          "action": "schedule_update",
+          "operator": "Penguji Otomatis",
+          "details": "Jadwal: 2026-10-01 08:00 s.d. 2026-10-01 09:00 (Asia/Makassar)"
+        },
+        {
+          "timestamp": "2026-10-27T08:56:17.650Z",
+          "action": "lock",
+          "operator": "Penguji Otomatis",
+          "reason": "Pengujian penguncian akses.",
+          "details": "Penguncian manual aplikasi web"
+        },
+        {
+          "timestamp": "2026-10-27T08:56:17.630Z",
+          "action": "unlock",
+          "operator": "Penguji Otomatis",
+          "reason": "Akses dibuka kembali secara manual.",
+          "details": "Pembukaan kembali akses aplikasi secara manual"
+        }
+      ]
+    }
+  },
+  "sessions": [
+    {
+      "id": "cbt-1793089249903-jopk9",
+      "sessionToken": "token-1793089249903-z21t3691",
+      "studentName": "Ning",
+      "studentClass": "XI.1",
+      "participantNumber": "5",
+      "examCode": "",
+      "startTime": "2026-10-27T08:20:49.903Z",
+      "status": "submitted",
+      "answers": {
+        "1": {
+          "singleChoice": "D"
+        },
+        "2": {
+          "singleChoice": "E"
+        },
+        "3": {
+          "multiChoices": [
+            "D"
+          ]
+        },
+        "4": {
+          "multiChoices": [
+            "E"
+          ]
+        },
+        "5": {
+          "matchedPairs": {
+            "1": "E",
+            "2": "D",
+            "3": "D"
+          }
+        },
+        "6": {
+          "matchedPairs": {
+            "1": "D",
+            "2": "E"
+          }
+        }
+      },
+      "reviewFlags": {},
+      "tabViolations": [],
+      "scores": {
+        "perQuestion": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0,
+          "8": 0,
+          "9": 0,
+          "10": 0
+        },
+        "essayRubrics": {
+          "9": {
+            "identifikasi": 0,
+            "model": 0,
+            "hitungan": 0,
+            "penalaran": 0,
+            "kesimpulan": 0
+          },
+          "10": {
+            "identifikasi": 0,
+            "model": 0,
+            "hitungan": 0,
+            "penalaran": 0,
+            "kesimpulan": 0
+          }
+        },
+        "objectiveScore": 0,
+        "essayScore": 0,
+        "totalScore": 0,
+        "finalScore100": 0,
+        "isFullyGraded": true
+      },
+      "finishTime": "2026-10-27T08:21:30.911Z",
+      "durationSecondsUsed": 41,
+      "statusReason": "Diselesaikan secara mandiri oleh murid"
+    },
+    {
+      "id": "cbt-1793089388857-ujl28",
+      "sessionToken": "token-1793089388857-wevq0nf3",
+      "studentName": "Lisa",
+      "studentClass": "XI.1",
+      "participantNumber": "8",
+      "examCode": "",
+      "startTime": "2026-10-27T08:23:08.857Z",
+      "status": "submitted",
+      "answers": {
+        "1": {
+          "singleChoice": "B"
+        },
+        "2": {
+          "singleChoice": "C"
+        }
+      },
+      "reviewFlags": {},
+      "tabViolations": [],
+      "scores": {
+        "perQuestion": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0,
+          "8": 0,
+          "9": 0,
+          "10": 0
+        },
+        "essayRubrics": {
+          "9": {
+            "identifikasi": 0,
+            "model": 0,
+            "hitungan": 0,
+            "penalaran": 0,
+            "kesimpulan": 0
+          },
+          "10": {
+            "identifikasi": 0,
+            "model": 0,
+            "hitungan": 0,
+            "penalaran": 0,
+            "kesimpulan": 0
+          }
+        },
+        "objectiveScore": 0,
+        "essayScore": 0,
+        "totalScore": 0,
+        "finalScore100": 0,
+        "isFullyGraded": true
+      },
+      "finishTime": "2026-10-27T08:23:15.408Z",
+      "durationSecondsUsed": 6,
+      "statusReason": "Diselesaikan secara mandiri oleh murid"
+    }
+  ]
+}
