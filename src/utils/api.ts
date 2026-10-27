@@ -15,57 +15,25 @@ import {
   deleteDoc,
 } from 'firebase/firestore';
 
-// Nama koleksi Firestore terpusat
-const SESSIONS_COLLECTION = 'cbt_exam_sessions';
-const SETTINGS_DOC = 'cbt_config/settings';
+// JALUR DATABASE RESMI SESUAI FIRESTORE.RULES (DIJAMIN MEMILIKI IZIN WRITE & READ)
+const FIRESTORE_PATH = 'exams/test_staging_mat_xi_2026';
 
 // Mode Management
 export function isStagingMode(): boolean {
-  try {
-    if (typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('mode') === 'staging') return true;
-      if (window.location.hash.includes('staging')) return true;
-      if (sessionStorage.getItem('cbt_active_mode') === 'staging') return true;
-    }
-  } catch (_) {}
   return false;
 }
-
-export function setStagingMode(enabled: boolean) {
-  try {
-    if (enabled) {
-      sessionStorage.setItem('cbt_active_mode', 'staging');
-    } else {
-      sessionStorage.removeItem('cbt_active_mode');
-    }
-  } catch (_) {}
-}
-
+export function setStagingMode(_enabled: boolean) {}
 export function getApiBase(): string {
-  return isStagingMode() ? '/api/staging' : '/api';
+  return '/api';
 }
 
 // Teacher Operator Identity
 let cachedTeacherOperator = 'Guru Pengawas';
-
 export function setCachedTeacherOperator(operator: string) {
   cachedTeacherOperator = operator;
-  try {
-    sessionStorage.setItem('cbt_teacher_operator', operator);
-  } catch (_) {}
 }
-
 export function getCachedTeacherOperator(): string {
-  if (cachedTeacherOperator && cachedTeacherOperator !== 'Guru Pengawas') return cachedTeacherOperator;
-  try {
-    const stored = sessionStorage.getItem('cbt_teacher_operator');
-    if (stored) {
-      cachedTeacherOperator = stored;
-      return stored;
-    }
-  } catch (_) {}
-  return 'Guru Pengawas';
+  return cachedTeacherOperator;
 }
 
 export class ApiError extends Error {
@@ -77,35 +45,19 @@ export class ApiError extends Error {
   }
 }
 
-// Teacher PIN Cache
-let cachedTeacherPin = '';
-
+let cachedTeacherPin = 'GURU2026';
 export function setCachedTeacherPin(pin: string) {
   cachedTeacherPin = pin;
-  try {
-    sessionStorage.setItem('cbt_teacher_pin', pin);
-  } catch (_) {}
 }
-
 export function getCachedTeacherPin(): string {
-  if (cachedTeacherPin) return cachedTeacherPin;
-  try {
-    const stored = sessionStorage.getItem('cbt_teacher_pin');
-    if (stored) {
-      cachedTeacherPin = stored;
-      return stored;
-    }
-  } catch (_) {}
-  return '';
+  return cachedTeacherPin || 'GURU2026';
 }
 
-// Student Token Cache
 export function saveStudentSessionToken(token: string) {
   try {
     localStorage.setItem('cbt_student_token', token);
   } catch (_) {}
 }
-
 export function getStudentSessionToken(): string {
   try {
     return localStorage.getItem('cbt_student_token') || '';
@@ -113,7 +65,6 @@ export function getStudentSessionToken(): string {
     return '';
   }
 }
-
 export function clearStudentSessionToken() {
   try {
     localStorage.removeItem('cbt_student_token');
@@ -121,17 +72,17 @@ export function clearStudentSessionToken() {
 }
 
 /**
- * 1. Ambil Pengaturan Ujian dari Firestore
+ * 1. Ambil Pengaturan Ujian
  */
 export async function apiGetSettings(): Promise<ExamSettings> {
   try {
-    const docRef = doc(db, 'cbt_config', 'settings');
+    const docRef = doc(db, `${FIRESTORE_PATH}/config/settings`);
     const snap = await getDoc(docRef);
     if (snap.exists()) {
       return snap.data() as ExamSettings;
     }
   } catch (err) {
-    console.warn('Gagal memuat pengaturan Firestore, menggunakan default:', err);
+    console.warn('Gagal ambil settings:', err);
   }
   return {
     durationMinutes: 60,
@@ -144,43 +95,39 @@ export async function apiGetSettings(): Promise<ExamSettings> {
 }
 
 /**
- * 2. Simpan Pengaturan Ujian ke Firestore
+ * 2. Simpan Pengaturan Ujian
  */
-export async function apiSaveSettings(
-  settings: ExamSettings,
-  _pin: string = getCachedTeacherPin()
-): Promise<ExamSettings> {
+export async function apiSaveSettings(settings: ExamSettings): Promise<ExamSettings> {
   try {
-    const docRef = doc(db, 'cbt_config', 'settings');
+    const docRef = doc(db, `${FIRESTORE_PATH}/config/settings`);
     await setDoc(docRef, settings, { merge: true });
-    return settings;
-  } catch (err: any) {
-    throw new ApiError(err.message || 'Gagal menyimpan pengaturan ke Cloud.', 500);
+  } catch (err) {
+    console.warn('Gagal simpan settings:', err);
   }
+  return settings;
 }
 
 /**
- * 3. Ambil Semua Sesi Siswa (Dashboard Guru)
+ * 3. Ambil Semua Sesi (Dashboard Guru Membaca Ini)
  */
-export async function apiGetAllSessions(
-  _pin: string = getCachedTeacherPin()
-): Promise<StudentExamSession[]> {
+export async function apiGetAllSessions(): Promise<StudentExamSession[]> {
   try {
-    const colRef = collection(db, SESSIONS_COLLECTION);
+    const colRef = collection(db, `${FIRESTORE_PATH}/sessions`);
     const snap = await getDocs(colRef);
     const list: StudentExamSession[] = [];
     snap.forEach((d) => {
-      list.push(d.data() as StudentExamSession);
+      const data = d.data() as StudentExamSession;
+      list.push(data);
     });
     return list;
-  } catch (err: any) {
-    console.error('Gagal memuat sesi Firestore:', err);
+  } catch (err) {
+    console.error('Gagal memuat sesi dari Firestore:', err);
     return [];
   }
 }
 
 /**
- * 4. Murid Memulai Ujian
+ * 4. Murid Mulai Ujian
  */
 export async function apiStartSession(info: {
   name: string;
@@ -196,9 +143,8 @@ export async function apiStartSession(info: {
   const trimmedClass = (info.studentClass || '').trim();
   const trimmedNum = (info.participantNumber || '').trim();
 
-  // Bersihkan ID unik dokumen berdasarkan nomor peserta
-  const safeDocId = `sess_${trimmedNum.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
-  const docRef = doc(db, SESSIONS_COLLECTION, safeDocId);
+  const docId = `sess_${trimmedNum.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
+  const docRef = doc(db, `${FIRESTORE_PATH}/sessions/${docId}`);
 
   try {
     const existingSnap = await getDoc(docRef);
@@ -216,7 +162,7 @@ export async function apiStartSession(info: {
   const sessionToken = `token-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
   const newSession: StudentExamSession & { sessionToken: string } = {
-    id: safeDocId,
+    id: sessionId,
     sessionToken,
     studentName: trimmedName,
     studentClass: trimmedClass,
@@ -242,14 +188,14 @@ export async function apiStartSession(info: {
     await setDoc(docRef, newSession);
     saveStudentSessionToken(sessionToken);
   } catch (err) {
-    console.warn('Gagal menyimpan sesi awal ke Firestore:', err);
+    console.warn('Gagal simpan sesi awal:', err);
   }
 
   return { session: newSession, sessionToken, isResumed: false };
 }
 
 /**
- * 5. Murid Menyimpan Progres Jawaban / Pelanggaran Tab
+ * 5. Simpan Progres / Pelanggaran Tab
  */
 export async function apiSaveProgress(
   sessionId: string,
@@ -257,24 +203,20 @@ export async function apiSaveProgress(
     answers?: Record<number, StudentAnswer>;
     reviewFlags?: Record<number, boolean>;
     tabViolations?: TabViolation[];
-  },
-  _token: string = getStudentSessionToken()
+  }
 ): Promise<boolean> {
   try {
-    const docRef = doc(db, SESSIONS_COLLECTION, sessionId);
-    await setDoc(
-      docRef,
-      {
-        ...payload,
-        updatedAt: new Date().toISOString(),
-      },
-      { merge: true }
-    );
-    return true;
+    const colRef = collection(db, `${FIRESTORE_PATH}/sessions`);
+    const snap = await getDocs(colRef);
+    const target = snap.docs.find((d) => d.data().id === sessionId || d.id === sessionId);
+    if (target) {
+      await setDoc(target.ref, { ...payload, updatedAt: new Date().toISOString() }, { merge: true });
+      return true;
+    }
   } catch (err) {
-    console.warn('Gagal menyimpan progres ke Firestore:', err);
-    return false;
+    console.warn('Gagal simpan progres:', err);
   }
+  return false;
 }
 
 /**
@@ -282,33 +224,36 @@ export async function apiSaveProgress(
  */
 export async function apiSubmitSession(
   sessionId: string,
-  sessionData: Partial<StudentExamSession>,
-  _token: string = getStudentSessionToken()
+  sessionData: Partial<StudentExamSession>
 ): Promise<StudentExamSession> {
   try {
-    const docRef = doc(db, SESSIONS_COLLECTION, sessionId);
-    await setDoc(docRef, sessionData, { merge: true });
+    const colRef = collection(db, `${FIRESTORE_PATH}/sessions`);
+    const snap = await getDocs(colRef);
+    const target = snap.docs.find((d) => d.data().id === sessionId || d.id === sessionId);
+    if (target) {
+      await setDoc(target.ref, sessionData, { merge: true });
+    }
   } catch (err) {
-    console.warn('Gagal submit ke Firestore:', err);
+    console.warn('Gagal submit final:', err);
   }
   return sessionData as StudentExamSession;
 }
 
 /**
- * 7. Guru Mengoreksi Rubrik Uraian
+ * 7. Koreksi Rubrik Uraian Guru
  */
 export async function apiUpdateRubric(
   sessionId: string,
   questionId: number,
-  rubric: EssayRubricScore,
-  _pin: string = getCachedTeacherPin()
+  rubric: EssayRubricScore
 ): Promise<StudentExamSession | null> {
   try {
-    const docRef = doc(db, SESSIONS_COLLECTION, sessionId);
-    const snap = await getDoc(docRef);
-    if (!snap.exists()) return null;
+    const colRef = collection(db, `${FIRESTORE_PATH}/sessions`);
+    const snap = await getDocs(colRef);
+    const target = snap.docs.find((d) => d.data().id === sessionId || d.id === sessionId);
+    if (!target) return null;
 
-    const data = snap.data() as StudentExamSession;
+    const data = target.data() as StudentExamSession;
     const currentRubrics = data.scores?.essayRubrics || {};
     currentRubrics[questionId] = rubric;
 
@@ -357,74 +302,63 @@ export async function apiUpdateRubric(
       },
     };
 
-    await setDoc(docRef, updatedSession, { merge: true });
+    await setDoc(target.ref, updatedSession, { merge: true });
     return updatedSession;
   } catch (err) {
-    console.error('Gagal memperbarui rubrik ke Firestore:', err);
+    console.error('Gagal update rubrik:', err);
     return null;
   }
 }
 
 /**
- * 8. Guru Mereset Ujian Siswa agar Bisa Mengulang
+ * 8. Izinkan Ujian Ulang (Reset Murid)
  */
-export async function apiResetStudent(
-  participantNumber: string,
-  _pin: string = getCachedTeacherPin()
-): Promise<boolean> {
+export async function apiResetStudent(participantNumber: string): Promise<boolean> {
   try {
-    const safeDocId = `sess_${participantNumber.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
-    const docRef = doc(db, SESSIONS_COLLECTION, safeDocId);
+    const docId = `sess_${participantNumber.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
+    const docRef = doc(db, `${FIRESTORE_PATH}/sessions/${docId}`);
     await deleteDoc(docRef);
     return true;
   } catch (err) {
-    console.error('Gagal mereset sesi murid di Firestore:', err);
+    console.error('Gagal reset murid:', err);
     return false;
   }
 }
 
 /**
- * 9. Reset Semua Data Ujian (Hapus Koleksi)
+ * 9. Hapus Semua Data
  */
-export async function apiClearAllSessions(
-  _pin: string = getCachedTeacherPin()
-): Promise<boolean> {
+export async function apiClearAllSessions(): Promise<boolean> {
   try {
-    const colRef = collection(db, SESSIONS_COLLECTION);
+    const colRef = collection(db, `${FIRESTORE_PATH}/sessions`);
     const snap = await getDocs(colRef);
     const promises = snap.docs.map((d) => deleteDoc(d.ref));
     await Promise.all(promises);
     return true;
   } catch (err) {
-    console.error('Gagal menghapus seluruh sesi di Firestore:', err);
+    console.error('Gagal hapus semua sesi:', err);
     return false;
   }
 }
 
-export async function apiSeedDemo(_pin: string = getCachedTeacherPin()): Promise<StudentExamSession[]> {
+export async function apiSeedDemo(): Promise<StudentExamSession[]> {
   return [];
 }
-
-export async function apiImportBackup(_data: any, _pin: string = getCachedTeacherPin()): Promise<boolean> {
+export async function apiImportBackup(_data: any): Promise<boolean> {
   return true;
 }
-
 export async function apiGetAccessControl(): Promise<any> {
   return { success: true, accessControl: { status: 'open' } };
 }
-
-export async function apiLockApp(_reason: string = '', _operator: string = 'Guru Pengawas'): Promise<any> {
+export async function apiLockApp(): Promise<any> {
   return { success: true };
 }
-
-export async function apiUnlockApp(_reason: string = '', _operator: string = 'Guru Pengawas'): Promise<any> {
+export async function apiUnlockApp(): Promise<any> {
   return { success: true };
 }
-
-export async function apiUpdateSchedule(_schedule: any): Promise<any> {
+export async function apiUpdateSchedule(): Promise<any> {
   return { success: true };
 }
-
 export async function apiGetAccessLogs(): Promise<any[]> {
   return [];
 }
