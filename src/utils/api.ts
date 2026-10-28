@@ -4,6 +4,7 @@ import {
   EssayRubricScore,
   StudentAnswer,
   TabViolation,
+  AppAccessControl,
 } from '../types/cbt';
 import { db } from '../lib/firebase';
 import {
@@ -15,8 +16,32 @@ import {
   deleteDoc,
 } from 'firebase/firestore';
 
-// JALUR DATABASE RESMI SESUAI FIRESTORE.RULES (DIJAMIN MEMILIKI IZIN WRITE & READ)
+// JALUR DATABASE RESMI SESUAI FIRESTORE.RULES
 const FIRESTORE_PATH = 'exams/test_staging_mat_xi_2026';
+
+export const DEFAULT_ACCESS_CONTROL: AppAccessControl = {
+  status: 'open',
+  lockReason: '',
+  schedule: {
+    startDate: '',
+    startTime: '',
+    endDate: '',
+    endTime: '',
+    timezone: 'Asia/Makassar',
+    isScheduleEnabled: false,
+  },
+  logs: [],
+};
+
+export const DEFAULT_SETTINGS: ExamSettings = {
+  durationMinutes: 60,
+  examCode: '',
+  codeRequired: false,
+  tabSwitchRule: 'warning-2',
+  kkmScore: 75,
+  preventRetake: true,
+  accessControl: DEFAULT_ACCESS_CONTROL,
+};
 
 // Mode Management
 export function isStagingMode(): boolean {
@@ -71,6 +96,76 @@ export function clearStudentSessionToken() {
   } catch (_) {}
 }
 
+function evaluateServerAccessClient(ac?: AppAccessControl) {
+  const now = new Date();
+  const serverTime = now.toISOString();
+  const serverTimeWita =
+    now.toLocaleString('id-ID', {
+      timeZone: 'Asia/Makassar',
+      dateStyle: 'full',
+      timeStyle: 'medium',
+    }) + ' WITA';
+
+  const ctrl: AppAccessControl = ac || DEFAULT_ACCESS_CONTROL;
+
+  if (ctrl.status === 'locked') {
+    return {
+      isAllowed: false,
+      status: 'locked',
+      reason: ctrl.lockReason || 'Aplikasi sedang dikunci oleh guru pengawas.',
+      serverTime,
+      serverTimeWita,
+    };
+  }
+
+  if (ctrl.status === 'scheduled' || ctrl.schedule?.isScheduleEnabled) {
+    const s = ctrl.schedule || ({} as any);
+    if (!s.startDate || !s.startTime || !s.endDate || !s.endTime) {
+      return {
+        isAllowed: false,
+        status: 'scheduled',
+        reason: 'Jadwal akses otomatis belum lengkap.',
+        serverTime,
+        serverTimeWita,
+      };
+    }
+
+    const startIso = `${s.startDate}T${s.startTime}:00+08:00`;
+    const endIso = `${s.endDate}T${s.endTime}:00+08:00`;
+    const nowMs = now.getTime();
+    const startMs = new Date(startIso).getTime();
+    const endMs = new Date(endIso).getTime();
+
+    if (nowMs < startMs) {
+      return {
+        isAllowed: false,
+        status: 'scheduled',
+        reason: `Ujian belum dibuka. Akses akan dibuka pada ${s.startDate} pukul ${s.startTime} WITA.`,
+        serverTime,
+        serverTimeWita,
+      };
+    }
+
+    if (nowMs > endMs) {
+      return {
+        isAllowed: false,
+        status: 'scheduled',
+        reason: `Sesi ujian telah berakhir pada ${s.endDate} pukul ${s.endTime} WITA.`,
+        serverTime,
+        serverTimeWita,
+      };
+    }
+  }
+
+  return {
+    isAllowed: true,
+    status: 'open',
+    reason: '',
+    serverTime,
+    serverTimeWita,
+  };
+}
+
 /**
  * 1. Ambil Pengaturan Ujian
  */
@@ -84,14 +179,7 @@ export async function apiGetSettings(): Promise<ExamSettings> {
   } catch (err) {
     console.warn('Gagal ambil settings:', err);
   }
-  return {
-    durationMinutes: 60,
-    examCode: '',
-    codeRequired: false,
-    tabSwitchRule: 'warning-2',
-    kkmScore: 75,
-    preventRetake: true,
-  };
+  return DEFAULT_SETTINGS;
 }
 
 /**
@@ -108,7 +196,142 @@ export async function apiSaveSettings(settings: ExamSettings): Promise<ExamSetti
 }
 
 /**
- * 3. Ambil Semua Sesi (Dashboard Guru Membaca Ini)
+ * 3. Ambil Status Akses & Jadwal Kontrol (Membuat Tulisan 'Memuat waktu server' Langsung Berjalan)
+ */
+export async function apiGetAccessControl(): Promise<any> {
+  try {
+    const docRef = doc(db, `${FIRESTORE_PATH}/config/settings`);
+    const snap = await getDoc(docRef);
+    const settings = snap.exists() ? (snap.data() as ExamSettings) : DEFAULT_SETTINGS;
+    const ac = settings.accessControl || DEFAULT_ACCESS_CONTROL;
+    const evaluation = evaluateServerAccessClient(ac);
+    return {
+      success: true,
+      accessControl: ac,
+      evaluation,
+    };
+  } catch (err) {
+    return {
+      success: true,
+      accessControl: DEFAULT_ACCESS_CONTROL,
+      evaluation: evaluateServerAccessClient(DEFAULT_ACCESS_CONTROL),
+    };
+  }
+}
+
+/**
+ * 4. KUNCI APLIKASI SEKARANG (Tombol Merah)
+ */
+export async function apiLockApp(
+  reason: string = 'Penguncian akses oleh guru pengawas.',
+  operator: string = 'Guru Pengawas'
+): Promise<any> {
+  try {
+    const docRef = doc(db, `${FIRESTORE_PATH}/config/settings`);
+    const snap = await getDoc(docRef);
+    const settings = snap.exists() ? (snap.data() as ExamSettings) : { ...DEFAULT_SETTINGS };
+    const ac = settings.accessControl || { ...DEFAULT_ACCESS_CONTROL };
+
+    ac.status = 'locked';
+    ac.lockReason = reason;
+    if (!Array.isArray(ac.logs)) ac.logs = [];
+    ac.logs.unshift({
+      timestamp: new Date().toISOString(),
+      action: 'lock',
+      operator,
+      reason,
+      details: 'Penguncian manual aplikasi web oleh guru',
+    });
+
+    settings.accessControl = ac;
+    await setDoc(docRef, settings, { merge: true });
+    return { success: true, accessControl: ac, evaluation: evaluateServerAccessClient(ac) };
+  } catch (err: any) {
+    throw new ApiError(err.message || 'Gagal mengunci aplikasi.', 500);
+  }
+}
+
+/**
+ * 5. BUKA AKSES UJIAN (Tombol Hijau)
+ */
+export async function apiUnlockApp(
+  operator: string = 'Guru Pengawas',
+  reason: string = 'Pembukaan kembali akses aplikasi.'
+): Promise<any> {
+  try {
+    const docRef = doc(db, `${FIRESTORE_PATH}/config/settings`);
+    const snap = await getDoc(docRef);
+    const settings = snap.exists() ? (snap.data() as ExamSettings) : { ...DEFAULT_SETTINGS };
+    const ac = settings.accessControl || { ...DEFAULT_ACCESS_CONTROL };
+
+    ac.status = 'open';
+    ac.lockReason = '';
+    if (ac.schedule) ac.schedule.isScheduleEnabled = false;
+    if (!Array.isArray(ac.logs)) ac.logs = [];
+    ac.logs.unshift({
+      timestamp: new Date().toISOString(),
+      action: 'unlock',
+      operator,
+      reason,
+      details: 'Pembukaan kembali akses aplikasi secara manual oleh guru',
+    });
+
+    settings.accessControl = ac;
+    await setDoc(docRef, settings, { merge: true });
+    return { success: true, accessControl: ac, evaluation: evaluateServerAccessClient(ac) };
+  } catch (err: any) {
+    throw new ApiError(err.message || 'Gagal membuka akses aplikasi.', 500);
+  }
+}
+
+/**
+ * 6. SIMPAN & TERAPKAN JADWAL AKSES OTOMATIS (Tombol Ungu)
+ */
+export async function apiUpdateSchedule(
+  schedule: any,
+  operator: string = 'Guru Pengawas'
+): Promise<any> {
+  try {
+    const docRef = doc(db, `${FIRESTORE_PATH}/config/settings`);
+    const snap = await getDoc(docRef);
+    const settings = snap.exists() ? (snap.data() as ExamSettings) : { ...DEFAULT_SETTINGS };
+    const ac = settings.accessControl || { ...DEFAULT_ACCESS_CONTROL };
+
+    ac.schedule = { ...schedule };
+    ac.status = schedule.isScheduleEnabled ? 'scheduled' : 'open';
+    if (!Array.isArray(ac.logs)) ac.logs = [];
+    ac.logs.unshift({
+      timestamp: new Date().toISOString(),
+      action: 'schedule_update',
+      operator,
+      details: `Jadwal: ${schedule.startDate} ${schedule.startTime} s.d. ${schedule.endDate} ${schedule.endTime} (${schedule.timezone})`,
+    });
+
+    settings.accessControl = ac;
+    await setDoc(docRef, settings, { merge: true });
+    return { success: true, accessControl: ac, evaluation: evaluateServerAccessClient(ac) };
+  } catch (err: any) {
+    throw new ApiError(err.message || 'Gagal memperbarui jadwal.', 500);
+  }
+}
+
+/**
+ * 7. Ambil Riwayat Log Akses
+ */
+export async function apiGetAccessLogs(): Promise<any[]> {
+  try {
+    const docRef = doc(db, `${FIRESTORE_PATH}/config/settings`);
+    const snap = await getDoc(docRef);
+    if (snap.exists()) {
+      const data = snap.data() as ExamSettings;
+      return data.accessControl?.logs || [];
+    }
+  } catch (_) {}
+  return [];
+}
+
+/**
+ * 8. Ambil Semua Sesi (Dashboard Guru)
  */
 export async function apiGetAllSessions(): Promise<StudentExamSession[]> {
   try {
@@ -127,7 +350,7 @@ export async function apiGetAllSessions(): Promise<StudentExamSession[]> {
 }
 
 /**
- * 4. Murid Mulai Ujian
+ * 9. Murid Mulai Ujian
  */
 export async function apiStartSession(info: {
   name: string;
@@ -195,7 +418,7 @@ export async function apiStartSession(info: {
 }
 
 /**
- * 5. Simpan Progres / Pelanggaran Tab
+ * 10. Simpan Progres / Pelanggaran Tab
  */
 export async function apiSaveProgress(
   sessionId: string,
@@ -220,7 +443,7 @@ export async function apiSaveProgress(
 }
 
 /**
- * 6. Murid Mengumpulkan Ujian (Submit Final)
+ * 11. Murid Mengumpulkan Ujian (Submit Final)
  */
 export async function apiSubmitSession(
   sessionId: string,
@@ -240,7 +463,7 @@ export async function apiSubmitSession(
 }
 
 /**
- * 7. Koreksi Rubrik Uraian Guru
+ * 12. Koreksi Rubrik Uraian Guru
  */
 export async function apiUpdateRubric(
   sessionId: string,
@@ -311,7 +534,7 @@ export async function apiUpdateRubric(
 }
 
 /**
- * 8. Izinkan Ujian Ulang (Reset Murid)
+ * 13. Izinkan Ujian Ulang (Reset Murid)
  */
 export async function apiResetStudent(participantNumber: string): Promise<boolean> {
   try {
@@ -326,7 +549,7 @@ export async function apiResetStudent(participantNumber: string): Promise<boolea
 }
 
 /**
- * 9. Hapus Semua Data
+ * 14. Hapus Semua Data
  */
 export async function apiClearAllSessions(): Promise<boolean> {
   try {
@@ -346,19 +569,4 @@ export async function apiSeedDemo(): Promise<StudentExamSession[]> {
 }
 export async function apiImportBackup(_data: any): Promise<boolean> {
   return true;
-}
-export async function apiGetAccessControl(): Promise<any> {
-  return { success: true, accessControl: { status: 'open' } };
-}
-export async function apiLockApp(): Promise<any> {
-  return { success: true };
-}
-export async function apiUnlockApp(): Promise<any> {
-  return { success: true };
-}
-export async function apiUpdateSchedule(): Promise<any> {
-  return { success: true };
-}
-export async function apiGetAccessLogs(): Promise<any[]> {
-  return [];
 }
